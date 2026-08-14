@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dự Báo Thời Tiết</title>
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1163/1163661.png">
+
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      --glass-bg: rgba(255, 255, 255, 0.07);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --glass-hover: rgba(255, 255, 255, 0.12);
+    }
+
+    body {
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      color: #f8fafc;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 2rem;
+    }
+
+    /* Glassmorphism Card Style */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    /* Header Styling */
+    .location-title {
+      font-weight: 700;
+      font-size: 1.6rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .date-subtitle {
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+
+    /* Weather Icon */
+    .weather-icon-lg {
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+    }
+
+    .weather-icon-sm {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+
+    /* Custom Mobile Ordering Layout for Today's Forecast */
+    .today-forecast-container {
+      display: flex;
+      flex-direction: column-reverse; /* Mobile: Khung giờ cao hơn (item 2) ở trên */
+      gap: 1rem;
+    }
+
+    @media (min-width: 768px) {
+      .today-forecast-container {
+        flex-direction: row; /* Desktop: Khung giờ xếp ngang bình thường */
+      }
+    }
+
+    .today-card {
+      flex: 1;
+      padding: 1.5rem;
+    }
+
+    .temp-big {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    /* 10-Day Horizontal Scrollbar */
+    .daily-slider {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding: 0.5rem 0.25rem 1rem 0.25rem;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .daily-slider::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .daily-slider::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    .daily-slider::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+    }
+
+    .daily-card {
+      flex: 0 0 160px;
+      scroll-snap-align: start;
+      padding: 1.25rem 1rem;
+      text-align: center;
+    }
+
+    .daily-card:hover {
+      background: var(--glass-hover);
+      transform: translateY(-2px);
+    }
+
+    /* Detail Badge Style */
+    .weather-badge {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    /* Install PWA Button */
+    #btnInstall {
+      display: none;
+      border-radius: 50px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container py-4" style="max-width: 800px;">
+    
+    <!-- Top Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="location-title mb-1" id="stationName">Đang tải địa điểm...</h1>
+        <div class="date-subtitle" id="currentDateText">--/--/----</div>
+      </div>
+      <button id="btnInstall" class="btn btn-outline-light btn-sm shadow-sm">
+        <i class="bi bi-download me-1"></i> Cài ứng dụng
+      </button>
+    </div>
+
+    <!-- Section 1: Dự Báo Trong Ngày -->
+    <div class="mb-5">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-clock-history fs-5 text-info"></i>
+        <h2 class="h5 mb-0 fw-semibold">Dự báo trong ngày</h2>
+      </div>
+
+      <div id="todayContainer" class="today-forecast-container">
+        <!-- Render Javascript ở đây -->
+      </div>
+    </div>
+
+    <!-- Section 2: Dự Báo 10 Ngày Tới -->
+    <div class="mb-4">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-calendar-week fs-5 text-info"></i>
+        <h2 class="h5 mb-0 fw-semibold">Dự báo 10 ngày tới</h2>
+      </div>
+
+      <div class="daily-slider" id="dailySlider">
+        <!-- Render Javascript ở đây -->
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const BASE_ICON_URL = "https://kttv.gov.vn/";
+
+    // Lấy lat, lon từ URL (Default Vinh Phu nếu không có)
+    const urlParams = new URLSearchParams(window.location.search);
+    const lat = urlParams.get("lat") || "18.705688";
+    const lon = urlParams.get("lon") || "105.6846";
+    const API_URL = `https://khituongvietnam.gov.vn/WeatherApiService/api/forecast?lat=${lat}&lon=${lon}`;
+
+    // Helper Format Date
+    function formatDateString(dateStr) {
+      const d = new Date(dateStr);
+      const day = String(d.getDate()).padStart(2, "0");
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const year = d.getFullYear();
+      return `${day}-${month}-${year}`;
+    }
+
+    function getVietnameseDay(dateObj) {
+      const days = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+      const dayName = days[dateObj.getDay()];
+      const dd = String(dateObj.getDate()).padStart(2, "0");
+      const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+      return { dayName, dateFormatted: `${dd}/${mm}` };
+    }
+
+    function windDirection(deg) {
+      const dirs = ["Bắc", "Đông Bắc", "Đông", "Đông Nam", "Nam", "Tây Nam", "Tây", "Tây Bắc"];
+      return dirs[Math.round(deg / 45) % 8];
+    }
+
+    // Logic tính toán các khung giờ cần hiển thị trong ngày
+    function getActiveHours() {
+      const currentHour = new Date().getHours();
+      if (currentHour < 7) {
+        return [1, 7];
+      } else if (currentHour < 13) {
+        return [7, 13];
+      } else if (currentHour < 19) {
+        return [13, 19];
+      } else {
+        return [19]; // Từ 19h trở đi chỉ hiển thị khung 19h
+      }
+    }
+
+    // Render Khung giờ trong ngày
+    function renderTodayForecast(hourlyData) {
+      const activeHours = getActiveHours();
+      const container = document.getElementById("todayContainer");
+      container.innerHTML = "";
+
+      // Lọc các khung giờ phù hợp
+      const filtered = hourlyData.filter(item => activeHours.includes(item.ForecastHour));
+
+      filtered.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "glass-card today-card";
+        
+        card.innerHTML = `
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="badge bg-info bg-opacity-20 text-info px-3 py-2 rounded-pill fs-6 fw-semibold">
+              <i class="bi bi-clock me-1"></i>${item.ForecastHour}:00
+            </span>
+            <img src="${BASE_ICON_URL}${item.Icon}" alt="${item.Weather_Text}" class="weather-icon-lg">
+          </div>
+          <div class="d-flex justify-content-between align-items-end mb-3">
+            <div>
+              <div class="temp-big">${item.T2m}°C</div>
+              <div class="text-light opacity-75 small">${item.Weather_Text || 'Dự báo thời tiết'}</div>
+            </div>
+          </div>
+          <div class="row g-2 pt-2 border-top border-white border-opacity-10">
+            <div class="col-6">
+              <div class="weather-badge"><i class="bi bi-droplet-fill text-primary"></i> Độ ẩm: ${item.RH}%</div>
+            </div>
+            <div class="col-6">
+              <div class="weather-badge"><i class="bi bi-cloud-rain-fill text-info"></i> Mưa: ${item.PoP}%</div>
+            </div>
+            <div class="col-6">
+              <div class="weather-badge"><i class="bi bi-wind text-success"></i> Gió: ${item.Speed} m/s</div>
+            </div>
+            <div class="col-6">
+              <div class="weather-badge"><i class="bi bi-compass text-warning"></i> Hướng: ${windDirection(item.Direction)}</div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Render Dự báo 10 ngày tới (Slidebar vuốt ngang)
+    function render10DaysForecast(dailyData) {
+      const slider = document.getElementById("dailySlider");
+      slider.innerHTML = "";
+
+      dailyData.forEach((item, index) => {
+        const dateObj = new Date(item.ForecastDate);
+        const { dayName, dateFormatted } = getVietnameseDay(dateObj);
+        
+        const card = document.createElement("div");
+        card.className = "glass-card daily-card";
+
+        card.innerHTML = `
+          <div class="fw-bold text-light mb-0" style="font-size: 0.95rem;">${index === 0 ? 'Hôm nay' : dayName}</div>
+          <div class="small text-muted mb-2">${dateFormatted}</div>
+          <img src="${BASE_ICON_URL}${item.Icon}" alt="Icon" class="weather-icon-sm my-1">
+          <div class="my-2">
+            <span class="fw-bold text-danger me-1">${item.Tmax}°</span>
+            <span class="text-muted small">/ ${item.Tmin}°C</span>
+          </div>
+          <div class="small text-info mb-1 d-flex justify-content-center align-items-center gap-1">
+            <i class="bi bi-cloud-rain-fill"></i> ${item.PoP}%
+          </div>
+          <div class="small text-light opacity-50" style="font-size: 0.75rem; line-height: 1.2;">
+            ${item.Weather_Text || ''}
+          </div>
+        `;
+        slider.appendChild(card);
+      });
+    }
+
+    // Main Fetch Data Function
+    async function fetchWeatherData() {
+      try {
+        const res = await fetch(API_URL);
+        const json = await res.json();
+        
+        // Cập nhật thông tin địa điểm
+        if (json.Station) {
+          document.getElementById("stationName").innerText = `${json.Station.Name} - ${json.Station.ProvinceName}`;
+        }
+
+        const rawData = Array.isArray(json.Forecasts) ? json.Forecasts : [];
+
+        // Lọc dữ liệu theo giờ & theo ngày (ForecastHour = 99 là dự báo ngày)
+        const hourly = rawData.filter(x => x.ForecastHour !== 99);
+        const daily = rawData.filter(x => x.ForecastHour === 99);
+
+        if (hourly.length > 0) {
+          document.getElementById("currentDateText").innerText = `Dự báo ngày ${formatDateString(hourly[0].ForecastDate)}`;
+        }
+
+        renderTodayForecast(hourly);
+        render10DaysForecast(daily);
+
+      } catch (err) {
+        console.error("Lỗi tải dữ liệu thời tiết:", err);
+        document.getElementById("stationName").innerText = "Không thể tải dữ liệu";
+      }
+    }
+
+    // Khởi chạy
+    fetchWeatherData();
+
+    // ==========================================
+    // TÍCH HỢP PWA (AUTOMATIC INLINE PWA SETUP)
+    // ==========================================
+    const manifestData = {
+      "name": "Dự Báo Thời Tiết",
+      "short_name": "Thời Tiết",
+      "start_url": "./",
+      "display": "standalone",
+      "background_color": "#0f172a",
+      "theme_color": "#0f172a",
+      "icons": [
+        {
+          "src": "https://cdn-icons-png.flaticon.com/512/1163/1163661.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
+    };
+
+    // Dynamic Manifest URL Injection
+    const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+    const manifestURL = URL.createObjectURL(manifestBlob);
+    const linkManifest = document.createElement('link');
+    linkManifest.rel = 'manifest';
+    linkManifest.href = manifestURL;
+    document.head.appendChild(linkManifest);
+
+    // Register Inline Service Worker
+    if ('serviceWorker' in navigator) {
+      const swCode = `
+        const CACHE_NAME = 'weather-pwa-v1';
+        self.addEventListener('install', e => {
+          e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./'])));
+        });
+        self.addEventListener('fetch', e => {
+          e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+        });
+      `;
+      const swBlob = new Blob([swCode], { type: 'text/javascript' });
+      const swURL = URL.createObjectURL(swBlob);
+
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register(swURL).catch(err => console.log('SW Registration error:', err));
+      });
+    }
+
+    // Prompt Cài Đặt PWA
+    let deferredPrompt;
+    const btnInstall = document.getElementById('btnInstall');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      btnInstall.style.display = 'block';
+    });
+
+    btnInstall.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          btnInstall.style.display = 'none';
+        }
+        deferredPrompt = null;
+      }
+    });
+  </script>
+</body>
+</html>
